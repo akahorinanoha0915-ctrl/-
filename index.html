@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>独立ロードマップ チェックリスト</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#00ff88">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="独立ロードマップ">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --accent: #00ff88;
+    --accent2: #ff6b35;
+    --accent3: #7c3aed;
+    --text: #e8e8f0;
+    --muted: #555570;
+    --done-bg: #0d1f15;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    min-height: 100vh;
+    padding: 40px 20px 80px;
+  }
+
+  .noise {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.4;
+  }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    margin-bottom: 48px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-size: clamp(26px, 5vw, 38px);
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .subtitle {
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .progress-bar-wrap {
+    margin-top: 24px;
+    background: var(--border);
+    border-radius: 99px;
+    height: 6px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    border-radius: 99px;
+    transition: width 0.5s cubic-bezier(.22,1,.36,1);
+    width: 0%;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .progress-label span:first-child { color: var(--accent); }
+
+  .section {
+    margin-bottom: 40px;
+    opacity: 0;
+    transform: translateY(16px);
+    animation: fadeUp 0.5s forwards;
+  }
+
+  .section:nth-child(1) { animation-delay: 0.1s; }
+  .section:nth-child(2) { animation-delay: 0.2s; }
+  .section:nth-child(3) { animation-delay: 0.3s; }
+  .section:nth-child(4) { animation-delay: 0.4s; }
+  .section:nth-child(5) { animation-delay: 0.5s; }
+  .section:nth-child(6) { animation-delay: 0.6s; }
+
+  @keyframes fadeUp {
+    to { opacity: 1; transform: none; }
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .step-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 99px;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+  .badge-now { background: #ff6b3520; color: var(--accent2); border: 1px solid #ff6b3540; }
+  .badge-s1  { background: #00ff8815; color: var(--accent); border: 1px solid #00ff8830; }
+  .badge-s2  { background: #7c3aed20; color: #a78bfa; border: 1px solid #7c3aed40; }
+  .badge-s3  { background: #0ea5e920; color: #38bdf8; border: 1px solid #0ea5e940; }
+  .badge-s4  { background: #f59e0b20; color: #fbbf24; border: 1px solid #f59e0b40; }
+
+  .section-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .section-meta  { font-size: 11px; color: var(--muted); margin-left: auto; font-family: 'Space Mono', monospace; }
+
+  .items { display: flex; flex-direction: column; gap: 6px; }
+
+  .item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+  }
+
+  .item:hover { border-color: #2e2e4e; background: #14141f; }
+
+  .item.done {
+    background: var(--done-bg);
+    border-color: #1a3a28;
+  }
+
+  .item.done .item-text {
+    color: var(--muted);
+    text-decoration: line-through;
+    text-decoration-color: #334;
+  }
+
+  .checkbox {
+    width: 20px; height: 20px;
+    border-radius: 6px;
+    border: 2px solid var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+    transition: all 0.2s ease;
+  }
+
+  .item.done .checkbox { background: var(--accent); border-color: var(--accent); }
+
+  .checkmark { display: none; color: #000; font-size: 12px; font-weight: 900; }
+  .item.done .checkmark { display: block; }
+
+  .item-body { flex: 1; }
+  .item-text { font-size: 14px; line-height: 1.55; color: var(--text); transition: color 0.2s; }
+  .item-note { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+
+  .skill-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .skill-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .skill-card:hover { border-color: #2e2e4e; }
+
+  .skill-card.done { background: var(--done-bg); border-color: #1a3a28; }
+  .skill-card.done .skill-name { color: var(--muted); text-decoration: line-through; }
+
+  .skill-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .skill-icon { font-size: 18px; }
+
+  .skill-check {
+    width: 18px; height: 18px;
+    border-radius: 5px;
+    border: 2px solid var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    font-size: 11px; color: #000; font-weight: 900;
+  }
+
+  .skill-card.done .skill-check { background: var(--accent); border-color: var(--accent); }
+
+  .skill-name { font-size: 13px; font-weight: 700; color: var(--text); transition: color 0.2s; }
+  .skill-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .reset-btn {
+    margin-top: 48px;
+    display: block; width: 100%;
+    padding: 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px; letter-spacing: 1px;
+    cursor: pointer; transition: all 0.2s;
+  }
+
+  .reset-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  @media (max-width: 480px) { .skill-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<div class="container">
+
+  <header>
+    <div class="eyebrow">INDEPENDENCE ROADMAP</div>
+    <h1>不動産 × AI<br><span>独立チェックリスト</span></h1>
+    <p class="subtitle">社会人2年目・不動産実務経験あり・AI動画制作スキルあり<br>今日から動くための全ステップ</p>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+    <div class="progress-label">
+      <span id="progressText">0 / 0 完了</span>
+      <span id="progressPct">0%</span>
+    </div>
+  </header>
+
+  <!-- TODAY -->
+  <div class="section">
+    <div class="section-header">
+      <span class="step-badge badge-now">TODAY</span>
+      <span class="section-title">まず頭を整理する</span>
+      <span class="section-meta">今週中</span>
+    </div>
+    <div class="items">
+      <div class="item" data-id="t1" onclick="toggle(this)">
+        <div class="checkbox"><span class="checkmark">✓</span></div>
+        <div class="item-body">
+          <div class="item-text">目標収入を紙に書く</div>
+          <div class="item-note">「月いくら稼げれば独立と言えるか」を数字で決める</div>
+        </div>
+      </div>
+      <div class="item" data-id="t2" onclick="toggle(this)">
+        <div class="checkbox"><span class="checkmark">✓</span></div>
+        <div class="item-body">
+          <div class="item-text">「誰の・どんな課題を解決したいか」を一言で書く</div>
+          <div class="item-note">不動産会社のLP？物件動画？DX支援？ざっくりでOK</div>
+        </div>
+      </div>
+      <div class="item" data-id="t3" onclick="toggle(this)">
+        <div class="checkbox"><span class="checkmark">✓</span></div>
+        <div class="item-body">
+          <div class="item-text">今の職場・知り合いの不動産会社でデジタル的に困っていることをリストアップ</div>
+          <div class="item-note">これが最初の営業ネタになる</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="step-badge badge-s1">STEP 1</span>
+      <span class="section-title">武器を作る</span>
+      <span class="section-meta">1〜2ヶ月目</span>
+    </div>
+    <div class="items">
+      <div class="item" data-id="s1a" onclick="toggle(this)">
+        <div class="checkbox"><span class="checkmark">✓</span></div>
+        <div class="item-body">
+          <div class="item-text">AI動画制作のワークフローを固める</div>
+          <div class="item-note">台本生成・AI音声・字幕・サムネイルの一連の流れをテンプレ化する</div>
+        </div>
+      </div>
+      <div class="item" data-id="s1b" onclick="toggle(this)">
+        <div class="checkbox"><span class="checkmark">✓</span></div>
+        <div class="item-body">
+          <div class="item-text">架空の不動産会社のサンプルLP・動画を1本制作</div>
+          <div class="item-note">「こんなの作れます」という見本。これが営業ツールになる</div>
+        </div>
+      </div>
+      <div class="item" data-id="s1c" onclick="toggle(this)">
+        <div class="checkbox"><span class="checkmark">✓</span></div>
+        <div class="item-body">
+          <div class="item-text">提供サービスと料金の仮設定をする</div>
+          <div class="item-note">LP制作・物件動画・SNS運用代行など。まず自分の中で決めるだけでいい</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="step-badge badge-s2">STEP 2</span>
+      <span class="section-title">初めての1件を受注する</span>
+      <span class="section-meta">2〜3ヶ月目</span>
+    </div>
+    <div class="items">
+      <div class="item" data-id="s2a" onclick="toggle(this)">
+        <div class="checkbox"><span class="checkmark">✓</span></div>
+        <div class="item-body">
+          <div class="item-text">今の職場か知り合いの不動産会社に声をかける</div>
+          <div class="item-note">「LP or 動画、格安でやらせてほしい」と言うだけでいい</div>
+        </div>
+      </div>
+      <div class="item" data-id="s2b" onclick="toggle(this)">
+        <div class="checkbox"><span class="checkmark">✓</span></div>
+        <div class="item-body">
+          <div class="item-text">初案件を納品する</div>
+          <div class="item-note">完璧じゃなくていい。「完成させて渡す」ことが大事</div>
+        </div>
+      </div>
+      <div class="item" data-id="s2c" onclick="toggle(this)">
+        <div class="checkbox"><span class="checkmark">✓</span></div>
+        <div class="item-body">
+          <div class="item-text">感想・testimonialをもらう</div>
+          <div class="item-note">お金より「使ってみてどうだったか」のコメントが次の営業に効く</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="step-badge badge-s3">STEP 3</span>
+      <span class="section-title">副業として月5〜10万を稼ぐ</span>
+      <span class="section-meta">3〜6ヶ月目</span>
+    </div>
+    <div class="items">
+      <div class="item" data-id="s3a" onclick="toggle(this)">
+        <div class="checkbox"><span class="checkmark">✓</span></div>
+        <div class="item-body">
+          <div class="item-text">2件目・3件目の受注をする</div>
+          <div class="item-note">STEP2の実績と感想を見せながら営業する</div>
+        </div>
+      </div>
+      <div class="item" data-id="s3b" onclick="toggle(this)">
+        <div class="checkbox"><span class="checkmark">✓</span></div>
+        <div class="item-body">
+          <div class="item-text">月額制のサービスを1件作る</div>
+          <div class="item-note">「月◯本・月◯万円」の継続契約が安定収入の鍵</div>
+        </div>
+      </div>
+      <div class="item" data-id="s3c" onclick="toggle(this)">
+        <div class="checkbox"><span class="checkmark">✓</span></div>
+        <div class="item-body">
+          <div class="item-text">LP制作・動画・SNS運用をセット提案してみる</div>
+          <div class="item-note">単品より単価が上がる。不動産知識があるから全部提案できる</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="step-badge badge-s4">STEP 4</span>
+      <span class="section-title">独立を判断する</span>
+      <span class="section-meta">6〜12ヶ月目</span>
+    </div>
+    <div class="items">
+      <div class="item" data-id="s4a" onclick="toggle(this)">
+        <div class="checkbox"><span class="checkmark">✓</span></div>
+        <div class="item-body">
+          <div class="item-text">副業収入が月15〜20万を超えたか確認</div>
+          <div class="item-note">今の月収28万の半分以上が目安。ここで初めて独立を本気で考える</div>
+        </div>
+      </div>
+      <div class="item" data-id="s4b" onclick="toggle(this)">
+        <div class="checkbox"><span class="checkmark">✓</span></div>
+        <div class="item-body">
+          <div class="item-text">3ヶ月分の生活費を貯金として確保</div>
+          <div class="item-note">独立後の精神的安定のために必須</div>
+        </div>
+      </div>
+      <div class="item" data-id="s4c" onclick="toggle(this)">
+        <div class="checkbox"><span class="checkmark">✓</span></div>
+        <div class="item-body">
+          <div class="item-text">独立 or 継続 or 転職を判断する</div>
+          <div class="item-note">ここまで来れば何をすべきかは自然と見えてくる</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SKILL -->
+  <div class="section">
+    <div class="section-header">
+      <span class="step-badge badge-s1">SKILL</span>
+      <span class="section-title">習得しておくべきAIスキル</span>
+    </div>
+    <div class="skill-grid">
+      <div class="skill-card" data-id="sk1" onclick="toggleSkill(this)">
+        <div class="skill-top"><span class="skill-icon">🎬</span><div class="skill-check"></div></div>
+        <div class="skill-name">AI動画編集</div>
+        <div class="skill-desc">Runway, CapCut AI, Veoなど</div>
+      </div>
+      <div class="skill-card" data-id="sk2" onclick="toggleSkill(this)">
+        <div class="skill-top"><span class="skill-icon">🖥️</span><div class="skill-check"></div></div>
+        <div class="skill-name">LP・Web制作</div>
+        <div class="skill-desc">Wix, Studio, Framer, Cursor</div>
+      </div>
+      <div class="skill-card" data-id="sk3" onclick="toggleSkill(this)">
+        <div class="skill-top"><span class="skill-icon">🎙️</span><div class="skill-check"></div></div>
+        <div class="skill-name">AI音声・ナレーション</div>
+        <div class="skill-desc">ElevenLabs, VOICEVOX</div>
+      </div>
+      <div class="skill-card" data-id="sk4" onclick="toggleSkill(this)">
+        <div class="skill-top"><span class="skill-icon">🖼️</span><div class="skill-check"></div></div>
+        <div class="skill-name">AIサムネイル生成</div>
+        <div class="skill-desc">Midjourney, Canva AI</div>
+      </div>
+      <div class="skill-card" data-id="sk5" onclick="toggleSkill(this)">
+        <div class="skill-top"><span class="skill-icon">✍️</span><div class="skill-check"></div></div>
+        <div class="skill-name">AI文章生成</div>
+        <div class="skill-desc">物件説明文・LP文章・SNS投稿</div>
+      </div>
+      <div class="skill-card" data-id="sk6" onclick="toggleSkill(this)">
+        <div class="skill-top"><span class="skill-icon">📊</span><div class="skill-check"></div></div>
+        <div class="skill-name">SNS運用・分析</div>
+        <div class="skill-desc">TikTok / Instagram / YouTube</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="reset-btn" onclick="resetAll()">↺ リセット</button>
+
+</div>
+
+<script>
+  const STORAGE_KEY = 'checklist-state-v1';
+
+  // --- localStorage ---
+  function saveState() {
+    const state = {};
+    document.querySelectorAll('[data-id]').forEach(el => {
+      state[el.dataset.id] = el.classList.contains('done');
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const state = JSON.parse(raw);
+      document.querySelectorAll('[data-id]').forEach(el => {
+        if (state[el.dataset.id]) {
+          el.classList.add('done');
+          if (el.classList.contains('skill-card')) {
+            el.querySelector('.skill-check').textContent = '✓';
+          }
+        }
+      });
+    } catch(e) {}
+  }
+
+  // --- Progress ---
+  function updateProgress() {
+    const all = document.querySelectorAll('[data-id]');
+    const done = document.querySelectorAll('[data-id].done');
+    const total = all.length;
+    const count = done.length;
+    const pct = total > 0 ? Math.round(count / total * 100) : 0;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressText').textContent = `${count} / ${total} 完了`;
+    document.getElementById('progressPct').textContent = `${pct}%`;
+  }
+
+  function toggle(el) {
+    el.classList.toggle('done');
+    saveState();
+    updateProgress();
+  }
+
+  function toggleSkill(el) {
+    el.classList.toggle('done');
+    el.querySelector('.skill-check').textContent = el.classList.contains('done') ? '✓' : '';
+    saveState();
+    updateProgress();
+  }
+
+  function resetAll() {
+    if (!confirm('チェックをすべてリセットしますか？')) return;
+    document.querySelectorAll('[data-id].done').forEach(el => {
+      el.classList.remove('done');
+      const sc = el.querySelector('.skill-check');
+      if (sc) sc.textContent = '';
+    });
+    saveState();
+    updateProgress();
+  }
+
+  // --- Service Worker ---
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+
+  // --- Init ---
+  loadState();
+  updateProgress();
+</script>
+</body>
+</html>
