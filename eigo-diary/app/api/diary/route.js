@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
 import { supabaseAdmin } from "../../../lib/supabaseAdmin";
+import { generateFeedback } from "../../../lib/feedback";
 import {
   authenticateStudent,
   countEnglishWords,
@@ -8,52 +8,6 @@ import {
 } from "../../../lib/students";
 
 const MAX_LENGTH = 1000;
-
-const FEEDBACK_SCHEMA = {
-  type: "json_schema",
-  schema: {
-    type: "object",
-    properties: {
-      aiComment: {
-        type: "string",
-        description:
-          "Warm, encouraging comment in simple English (2-3 short sentences) from Ms. Sunny, followed by a short Japanese translation in parentheses.",
-      },
-      grammarNote: {
-        type: ["string", "null"],
-        description:
-          "One gentle grammar/spelling tip in simple Japanese for elementary school students, or null if the entry has no notable issues.",
-      },
-      todayWord: {
-        type: "object",
-        properties: {
-          word: { type: "string" },
-          meaning_ja: { type: "string" },
-          example: { type: "string" },
-        },
-        required: ["word", "meaning_ja", "example"],
-        additionalProperties: false,
-      },
-      vocabulary: {
-        type: "array",
-        description:
-          "English words the student actually used in the diary, with Japanese meanings.",
-        items: {
-          type: "object",
-          properties: {
-            word: { type: "string" },
-            meaning_ja: { type: "string" },
-            example: { type: "string" },
-          },
-          required: ["word", "meaning_ja", "example"],
-          additionalProperties: false,
-        },
-      },
-    },
-    required: ["aiComment", "grammarNote", "todayWord", "vocabulary"],
-    additionalProperties: false,
-  },
-};
 
 export async function POST(req) {
   let body;
@@ -100,41 +54,15 @@ export async function POST(req) {
     .gte("created_at", startOfDay.toISOString());
   const alreadyToday = (count || 0) > 0;
 
-  // AIコメント生成（Ms. Sunny）
-  let feedback;
-  try {
-    const client = new Anthropic();
-    const response = await client.messages.create({
-      model: "claude-opus-4-8",
-      max_tokens: 2048,
-      system:
-        "You are Ms. Sunny, a cheerful English teacher for Japanese elementary school students (grades 5-6). " +
-        "Students write short English diaries. Respond warmly and simply. " +
-        "Use vocabulary appropriate for beginners. Never criticize harshly.",
-      output_config: { format: FEEDBACK_SCHEMA },
-      messages: [
-        {
-          role: "user",
-          content: `Here is today's diary entry from a student:\n\n${text}`,
-        },
-      ],
-    });
-    if (response.stop_reason === "refusal") {
-      return NextResponse.json(
-        { error: "コメントを作れませんでした。もう一度送ってみてね" },
-        { status: 502 }
-      );
-    }
-    const textBlock = response.content.find((b) => b.type === "text");
-    feedback = JSON.parse(textBlock.text);
-  } catch (e) {
-    console.error("AI feedback failed:", e);
-    return NextResponse.json(
-      { error: "先生からのコメントづくりに失敗しました。少し待ってからもう一度送ってね（書いた日記は消えていません）" },
-      { status: 502 }
-    );
-  }
+  // 単語帳の既習語を取得（重複登録を避ける＋おすすめ単語の選定に使う）
+  const { data: existingWords } = await sb
+    .from("vocabulary")
+    .select("word")
+    .eq("student_id", studentId);
+  const known = (existingWords || []).map((v) => v.word);
 
+  // フィードバック生成（内蔵ロジック・無料。外部APIは使わない）
+  const feedback = generateFeedback(text, known);
   const wordCount = countEnglishWords(text);
 
   // 日記保存
@@ -153,18 +81,11 @@ export async function POST(req) {
     );
   }
 
-  // 使った単語を単語帳に追加（重複はスキップ）
-  const vocab = (feedback.vocabulary || []).slice(0, 10);
-  if (vocab.length > 0) {
-    const { data: existingWords } = await sb
-      .from("vocabulary")
-      .select("word")
-      .eq("student_id", studentId);
-    const known = new Set((existingWords || []).map((v) => v.word.toLowerCase()));
-    const fresh = vocab
-      .filter((v) => !known.has(v.word.toLowerCase()))
-      .map((v) => ({ student_id: studentId, ...v }));
-    if (fresh.length > 0) await sb.from("vocabulary").insert(fresh);
+  // 使った単語を単語帳に追加
+  if (feedback.vocabulary.length > 0) {
+    await sb.from("vocabulary").insert(
+      feedback.vocabulary.map((v) => ({ student_id: studentId, ...v }))
+    );
   }
 
   return NextResponse.json({
