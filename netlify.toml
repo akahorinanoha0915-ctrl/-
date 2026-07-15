@@ -1,0 +1,9 @@
+# Netlifyがこのファイルを読んで自動設定するため、
+# 画面でビルド設定を入力する必要はありません。
+[build]
+  base = "eigo-diary"
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
