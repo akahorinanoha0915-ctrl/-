@@ -1,0 +1,57 @@
+# 🌟 英語日記アプリ（改修版）
+
+小学5・6年生向けの英語日記アプリ。日記を書くとAIの「Ms. Sunny」がコメント・文法アドバイス・おすすめ単語を返してくれます。
+
+## 修正点一覧（旧版からの変更）
+
+### セキュリティ・個人情報
+1. **先生ページに認証を追加** — 環境変数 `TEACHER_PASSWORD` によるパスワード認証。クラスコードだけでは日記を閲覧できません。
+2. **Supabaseへのアクセスをすべてサーバー側に移動** — ブラウザにanonキーを露出せず、`service_role` キーはAPIルート内でのみ使用。あわせてRLSを有効化（`supabase/schema.sql`）。
+3. **児童の本人確認（あいことば）** — 初回利用時に4けたのPINを登録。以後、PINが一致しないと日記の閲覧・投稿はできません。
+
+### バグ・堅牢性
+4. タイトル・faviconを「英語日記アプリ」に変更（旧: Create Next App）
+5. ログイン状態をlocalStorageに保存（再読み込みしても入力し直し不要）
+6. 送信失敗時のエラーメッセージ表示＋書きかけ本文の自動下書き保存
+7. 入力バリデーション（空・日本語のみ・1000文字超を拒否し、優しいメッセージを表示）
+8. 二重送信防止＋「今日は書けたよ」バッジ（同日複数回の投稿はサーバー側で検知して表示）
+
+### 子ども向けUX
+9. 書き出し例文ボタン（I played… など）と日替わりのお題を表示
+10. AIコメント・単語の音声読み上げ（🔊ボタン、Web Speech API）
+11. 連続記録（🔥N日連続）とバッジ（1回・5回・10回・20回）、1回目からグラフ表示
+
+### 先生側
+12. N+1クエリを一括取得に変更（30人学級でも高速）
+13. AIコメント・文法アドバイスを先生ダッシュボードで確認可能
+14. CSV出力（BOM付きでExcel対応）と期間絞り込み
+
+### その他
+15. 単語数カウントを改善（英字を含むトークンのみカウント）
+16. PWA対応（manifest＋Service Worker、ホーム画面追加・オフライン下書き）
+
+## セットアップ
+
+### 1. Supabase
+`supabase/schema.sql` をSQL Editorで実行してください（既存DBの場合はファイル冒頭のalter文のみでも可）。
+
+### 2. 環境変数（Netlify → Site settings → Environment variables）
+
+| 変数 | 内容 |
+|---|---|
+| `SUPABASE_URL` | SupabaseプロジェクトのURL |
+| `SUPABASE_SERVICE_ROLE_KEY` | service_roleキー（**絶対に公開しない**） |
+| `ANTHROPIC_API_KEY` | Anthropic APIキー（Ms. Sunnyのコメント生成用） |
+| `TEACHER_PASSWORD` | 先生用ダッシュボードのパスワード |
+
+旧版で使っていた `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` は不要になったため削除してください。
+
+### 3. デプロイ
+Netlifyでこのリポジトリの `eigo-diary/` をベースディレクトリに指定してデプロイします。
+
+```bash
+# ローカル開発
+cd eigo-diary
+npm install
+npm run dev
+```

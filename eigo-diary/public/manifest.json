@@ -1,0 +1,16 @@
+{
+  "name": "英語日記アプリ",
+  "short_name": "英語日記",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#e0f2fe",
+  "theme_color": "#0ea5e9",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purposes": "any maskable"
+    }
+  ]
+}
